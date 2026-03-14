@@ -1,0 +1,18 @@
+# Environment
+.env
+__pycache__/
+*.pyc
+*.pyo
+
+# Vectorstore (too large for git)
+vectorstore/
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# Mac system files
+.DS_Store
+
+# Virtual environment
+venv/
+.venv/
