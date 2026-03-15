@@ -1,4 +1,5 @@
 import os
+import requests
 from langchain_groq import ChatGroq
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
@@ -6,9 +7,41 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_community.document_loaders import PyPDFLoader
 from dotenv import load_dotenv
 
 load_dotenv()
+
+def download_pdfs():
+    os.makedirs("data/documents", exist_ok=True)
+
+    urls = {
+        "hdfc_credit_card_policy.pdf": "https://github.com/CodeWithSushmita/banking-intelligence-assistant/blob/main/data/documents/hdfc_credit_card_policy.pdf",
+        "hdfc_customer_compensation_policy.pdf": "https://github.com/CodeWithSushmita/banking-intelligence-assistant/blob/main/data/documents/hdfc_customer_compensation_policy.pdf",
+        "hdfc_general_terms_conditions.pdf": "https://github.com/CodeWithSushmita/banking-intelligence-assistant/blob/main/data/documents/hdfc_general_terms_conditions.pdf",
+        "hdfc_grievance_policy.pdf": "https://github.com/CodeWithSushmita/banking-intelligence-assistant/blob/main/data/documents/hdfc_grievance_policy.pdf",
+        "hdfc_personal_loan_agreement.pdf": "https://github.com/CodeWithSushmita/banking-intelligence-assistant/blob/main/data/documents/hdfc_personal_loan_agreement.pdf",
+        "hdfc_savings_account_charges.pdf": "https://github.com/CodeWithSushmita/banking-intelligence-assistant/blob/main/data/documents/hdfc_savings_account_charges.pdf"
+    }
+
+    for name, url in urls.items():
+        path = f"data/documents/{name}"
+
+        if not os.path.exists(path):
+            r = requests.get(url)
+            with open(path, "wb") as f:
+                f.write(r.content)
+
+def load_documents():
+    docs = []
+    folder = "data/documents"
+
+    for file in os.listdir(folder):
+        if file.endswith(".pdf"):
+            loader = PyPDFLoader(os.path.join(folder, file))
+            docs.extend(loader.load())
+
+    return docs
 
 def load_rag_agent(vectorstore_path: str = "vectorstore/"):
     """Load the RAG agent from saved FAISS vectorstore."""
@@ -19,11 +52,13 @@ def load_rag_agent(vectorstore_path: str = "vectorstore/"):
     )
 
     # Load FAISS index
-    vectorstore = FAISS.load_local(
-        vectorstore_path,
-        embeddings,
-        allow_dangerous_deserialization=True
-    )
+    if os.path.exists("vectorstore/index.faiss"):
+        vectorstore = FAISS.load_local("vectorstore", embeddings)
+    else:
+        documents = load_documents()   # your PDF loader
+        vectorstore = FAISS.from_documents(documents, embeddings)
+        vectorstore.save_local("vectorstore")
+
 
     # MMR retriever
     retriever = vectorstore.as_retriever(
