@@ -24,7 +24,7 @@ def download_pdfs():
         "hdfc_general_terms_conditions.pdf": "https://github.com/CodeWithSushmita/banking-intelligence-assistant/blob/main/data/documents/hdfc_general_terms_conditions.pdf",
         "hdfc_grievance_policy.pdf": "https://github.com/CodeWithSushmita/banking-intelligence-assistant/blob/main/data/documents/hdfc_grievance_policy.pdf",
         "hdfc_personal_loan_agreement.pdf": "https://github.com/CodeWithSushmita/banking-intelligence-assistant/blob/main/data/documents/hdfc_personal_loan_agreement.pdf",
-        "hdfc_savings_account_charges.pdf": "https://github.com/CodeWithSushmita/banking-intelligence-assistant/blob/main/data/documents/hdfc_savings_account_charges.pdf"
+        "hdfc_savings_account_charges.pdf": "https://github.com/CodeWithSushmita/banking-intelligence-assistant/blob/main/data/documents/hdfc_savings_account_charges.pdf",
     }
 
     for name, url in urls.items():
