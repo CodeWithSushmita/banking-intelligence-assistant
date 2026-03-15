@@ -12,10 +12,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+import os
+import requests
+
 def download_pdfs():
     folder = "data/documents"
-
-    # Create folder if missing
     os.makedirs(folder, exist_ok=True)
 
     urls = {
@@ -28,12 +29,19 @@ def download_pdfs():
     }
 
     for name, url in urls.items():
-        path = f"data/documents/{name}"
+        path = os.path.join(folder, name)
 
         if not os.path.exists(path):
+            print(f"Downloading {name}...")
+
             r = requests.get(url)
-            with open(path, "wb") as f:
-                f.write(r.content)
+
+            # ensure valid download
+            if r.status_code == 200 and "application/pdf" in r.headers.get("Content-Type", ""):
+                with open(path, "wb") as f:
+                    f.write(r.content)
+            else:
+                print(f"Failed to download {name}. Check the URL.")
 
 def load_documents():
     docs = []
@@ -41,8 +49,11 @@ def load_documents():
 
     for file in os.listdir(folder):
         if file.endswith(".pdf"):
-            loader = PyPDFLoader(os.path.join(folder, file))
-            docs.extend(loader.load())
+            try:
+                loader = PyPDFLoader(os.path.join(folder, file))
+                docs.extend(loader.load())
+            except Exception as e:
+                print(f"Skipping corrupted PDF: {file} -> {e}")
 
     return docs
 
