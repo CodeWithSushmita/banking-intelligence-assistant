@@ -1,11 +1,14 @@
 langchain
 langchain-community
 langchain-groq
+langchain-huggingface
+langchain-text-splitters
 langgraph
 faiss-cpu
 sentence-transformers
-streamlit
 python-dotenv
 sqlalchemy
 pandas
 groq
+pypdf
+streamlit
