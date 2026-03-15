@@ -13,7 +13,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 def download_pdfs():
-    os.makedirs("data/documents", exist_ok=True)
+    folder = "data/documents"
+
+    # Create folder if missing
+    os.makedirs(folder, exist_ok=True)
 
     urls = {
         "hdfc_credit_card_policy.pdf": "https://github.com/CodeWithSushmita/banking-intelligence-assistant/blob/main/data/documents/hdfc_credit_card_policy.pdf",
@@ -45,6 +48,8 @@ def load_documents():
 
 def load_rag_agent(vectorstore_path: str = "vectorstore/"):
     """Load the RAG agent from saved FAISS vectorstore."""
+
+    download_pdfs()
 
     # Load embeddings
     embeddings = HuggingFaceEmbeddings(
