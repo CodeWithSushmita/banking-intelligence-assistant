@@ -15,52 +15,32 @@ load_dotenv()
 import os
 import requests
 
-def download_pdfs():
-    folder = "data/documents"
-    os.makedirs(folder, exist_ok=True)
-
-    urls = {
-        "hdfc_credit_card_policy.pdf": "https://github.com/CodeWithSushmita/banking-intelligence-assistant/blob/main/data/documents/hdfc_credit_card_policy.pdf",
-        "hdfc_customer_compensation_policy.pdf": "https://github.com/CodeWithSushmita/banking-intelligence-assistant/blob/main/data/documents/hdfc_customer_compensation_policy.pdf",
-        "hdfc_general_terms_conditions.pdf": "https://github.com/CodeWithSushmita/banking-intelligence-assistant/blob/main/data/documents/hdfc_general_terms_conditions.pdf",
-        "hdfc_grievance_policy.pdf": "https://github.com/CodeWithSushmita/banking-intelligence-assistant/blob/main/data/documents/hdfc_grievance_policy.pdf",
-        "hdfc_personal_loan_agreement.pdf": "https://github.com/CodeWithSushmita/banking-intelligence-assistant/blob/main/data/documents/hdfc_personal_loan_agreement.pdf",
-        "hdfc_savings_account_charges.pdf": "https://github.com/CodeWithSushmita/banking-intelligence-assistant/blob/main/data/documents/hdfc_savings_account_charges.pdf",
-    }
-
-    for name, url in urls.items():
-        path = os.path.join(folder, name)
-
-        if not os.path.exists(path):
-            print(f"Downloading {name}...")
-
-            r = requests.get(url)
-
-            # ensure valid download
-            if r.status_code == 200 and "application/pdf" in r.headers.get("Content-Type", ""):
-                with open(path, "wb") as f:
-                    f.write(r.content)
-            else:
-                print(f"Failed to download {name}. Check the URL.")
-
 def load_documents():
     docs = []
-    folder = "data/documents"
 
-    for file in os.listdir(folder):
-        if file.endswith(".pdf"):
-            try:
-                loader = PyPDFLoader(os.path.join(folder, file))
-                docs.extend(loader.load())
-            except Exception as e:
-                print(f"Skipping corrupted PDF: {file} -> {e}")
+    base_url = "https://huggingface.co/datasets/MLbySush/banking-rag-documents/resolve/main"
+
+    files = [
+        "hdfc_credit_card_policy.pdf",
+        "hdfc_customer_compensation_policy.pdf",
+        "hdfc_general_terms_conditions.pdf",
+        "hdfc_grievance_policy.pdf",
+        "hdfc_personal_loan_agreement.pdf",
+        "hdfc_savings_account_charges.pdf",
+    ]
+
+    for file in files:
+        try:
+            url = f"{base_url}/{file}"
+            loader = PyPDFLoader(url)
+            docs.extend(loader.load())
+        except Exception as e:
+            print(f"Error loading {file}: {e}")
 
     return docs
 
 def load_rag_agent(vectorstore_path: str = "vectorstore/"):
     """Load the RAG agent from saved FAISS vectorstore."""
-
-    download_pdfs()
 
     # Load embeddings
     embeddings = HuggingFaceEmbeddings(
@@ -71,7 +51,11 @@ def load_rag_agent(vectorstore_path: str = "vectorstore/"):
     if os.path.exists("vectorstore/index.faiss"):
         vectorstore = FAISS.load_local("vectorstore", embeddings)
     else:
-        documents = load_documents()   # your PDF loader
+        documents = load_documents()   #PDF loader
+
+        if not documents:
+            raise ValueError("No documents loaded. Check dataset URLs.")
+        
         vectorstore = FAISS.from_documents(documents, embeddings)
         vectorstore.save_local("vectorstore")
 
