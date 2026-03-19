@@ -92,7 +92,21 @@ Answer:"""
     )
 
     def format_docs(docs):
-        return "\n\n".join(doc.page_content for doc in docs)
+        formatted = []
+        sources = set()
+
+        for doc in docs:
+            source = doc.metadata.get("source", "Unknown")
+            filename = os.path.basename(source)
+
+            sources.add(filename)
+            formatted.append(doc.page_content)
+
+        context = "\n\n".join(formatted)
+
+        source_text = "\n\nSources:\n" + "\n".join(f"- {s}" for s in sources)
+
+        return context + source_text
 
     # LCEL chain
     rag_chain = (

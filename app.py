@@ -1,11 +1,17 @@
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+import streamlit as st
 
 import streamlit as st
 from agents.rag_agent import load_rag_agent
 from agents.sql_agent import load_sql_agent
 from agents.orchestrator import build_orchestrator
+
+import re
+
+def format_currency(text):
+    return re.sub(r"\$(\d+(?:,\d+)*(?:\.\d+)?)", r"₹\1", text)
 
 # ── PAGE CONFIG ──
 st.set_page_config(
@@ -72,7 +78,7 @@ if query := st.chat_input("Ask your banking question here..."):
                 "response": ""
             })
 
-        response = result["response"]
+        response = format_currency(result["response"])
         agent_used = result["agent_used"].upper()
 
         # Show which agent handled it
