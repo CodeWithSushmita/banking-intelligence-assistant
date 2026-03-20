@@ -80,58 +80,68 @@ def load_rag_agent(vectorstore_path: str = "vectorstore/"):
     # Grounded prompt
     prompt_template = """You are a helpful HDFC Bank policy assistant.
 
-Use ONLY the context below to answer the customer's question.
+    Use ONLY the context below to answer the customer's question.
 
-IMPORTANT:
-- Always include the sources at the end of your answer.
-- Also include a short explanation titled "Why this answer?"
-- Explain briefly how the answer was derived from context
-- The sources are provided in the context.
-- Format sources exactly like this:
+    IMPORTANT:
+    - Always include the sources at the end of your answer.
+    - Also include a short explanation titled "Why this answer?"
+    - Explain briefly how the answer was derived from context
+    - The sources are provided in the context.
+    - Format sources exactly like this:
 
-Sources:
-- file1.pdf
-- file2.pdf
+    Sources:
+    - file1.pdf
+    - file2.pdf
 
-If the answer is not in the context, say:
-"I don't have enough information in the policy documents to answer this. Please contact HDFC Bank directly."
+    If the answer is not in the context, say:
+    "I don't have enough information in the policy documents to answer this. Please contact HDFC Bank directly."
 
-Context:
-{context}
+    Context:
+    {context}
 
-Customer Question: {question}
+    Customer Question: {question}
 
-Answer:"""
+    Answer:"""
 
     prompt = PromptTemplate(
         template=prompt_template,
         input_variables=["context", "question"]
     )
 
-    def format_docs(docs):
-        formatted = []
+    def extract_sources(docs):
         sources = []
 
         for doc in docs:
             source = doc.metadata.get("source", "Unknown")
             filename = os.path.basename(source)
-
             sources.append(filename)
-            formatted.append(doc.page_content)
 
-        context = "\n\n".join(formatted)
+        return list(set(sources))
 
-        unique_sources = list(set(sources))
-        source_text = "\n\nSources:\n" + "\n".join(f"- {s}" for s in unique_sources)
+    def run_rag(question):
+        # 1. Retrieve documents
+        docs = retriever.get_relevant_documents(question)
 
-        return context + source_text
+        # 2. Create context for LLM
+        context = "\n\n".join(doc.page_content for doc in docs)
 
-    # LCEL chain
-    rag_chain = (
-        {"context": retriever | format_docs, "question": RunnablePassthrough()}
-        | prompt
-        | llm
-        | StrOutputParser()
-    )
+        # 3. Extract sources separately
+        sources = []
+        for doc in docs:
+            source = doc.metadata.get("source", "Unknown")
+            filename = os.path.basename(source)
+            sources.append(filename)
 
-    return rag_chain
+        sources = list(set(sources))
+
+        # 4. Call LLM
+        response = llm.invoke(
+            prompt.format(context=context, question=question)
+        )
+
+        return {
+            "answer": response.content,
+            "sources": sources
+        }
+
+    return run_rag

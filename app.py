@@ -77,27 +77,25 @@ if query := st.chat_input("Ask your banking question here..."):
                 "agent_used": "",
                 "response": ""
             })
-
-        response = format_currency(result["response"])
+        
+        response = result["answer"]
+        sources = result["sources"]
         agent_used = result["agent_used"].upper()
 
-        # Show which agent handled it
+        # Show agent
         if agent_used == "RAG":
-            st.caption(" Answered by: Policy Agent (RAG)")
+            st.caption("Answered by: Policy Agent (RAG)")
         else:
-            st.caption(" Answered by: Data Agent (SQL)")
-
-        if "Sources:" in response:
-            answer, sources = response.split("Sources:")
+            st.caption("Answered by: Data Agent (SQL)")
 
         # Show answer
-            st.markdown(answer)
+        st.markdown(response)
 
-        # Show sources nicely
+        # Show sources
+        if sources:
             st.markdown("### Sources")
-            for s in sources.strip().split("\n"):
-                if s.strip():
-                   st.markdown(f"- {s.replace('-', '').strip()}")
+            for s in sources:
+                st.markdown(f"- {s}")
         else:
             st.markdown(response)
 
