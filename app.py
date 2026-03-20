@@ -79,7 +79,7 @@ if query := st.chat_input("Ask your banking question here..."):
                 "sources": []
             })
         
-        response = result["answer"]
+        response = result["response"]
         sources = result["sources"]
         agent_used = result["agent_used"].upper()
 
@@ -93,10 +93,14 @@ if query := st.chat_input("Ask your banking question here..."):
         st.markdown(response)
 
         # Show sources
+        BASE_URL = "https://huggingface.co/datasets/MLbySush/banking-rag-documents/resolve/main"
+
         if sources:
             st.markdown("### Sources")
+
             for s in sources:
-                st.markdown(f"- {s}")
+                file_url = f"{BASE_URL}/{s}"
+                st.markdown(f"- [{s}]({file_url})")
         else:
             st.markdown(response)
 
