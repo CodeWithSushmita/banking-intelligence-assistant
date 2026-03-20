@@ -120,7 +120,7 @@ def load_rag_agent(vectorstore_path: str = "vectorstore/"):
 
     def run_rag(question):
         # 1. Retrieve documents
-        docs = retriever.get_relevant_documents(question)
+        docs = retriever.invoke(question)
 
         # 2. Create context for LLM
         context = "\n\n".join(doc.page_content for doc in docs)
