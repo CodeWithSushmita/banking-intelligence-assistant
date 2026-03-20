@@ -49,7 +49,11 @@ def load_rag_agent(vectorstore_path: str = "vectorstore/"):
 
     # Load FAISS index
     if os.path.exists("vectorstore/index.faiss"):
-        vectorstore = FAISS.load_local("vectorstore", embeddings)
+        vectorstore = FAISS.load_local(
+            "vectorstore",
+             embeddings,
+             allow_dangerous_deserialization=True
+    )
     else:
         documents = load_documents()   #PDF loader
 
@@ -75,9 +79,22 @@ def load_rag_agent(vectorstore_path: str = "vectorstore/"):
 
     # Grounded prompt
     prompt_template = """You are a helpful HDFC Bank policy assistant.
+
 Use ONLY the context below to answer the customer's question.
-If the answer is not in the context, say "I don't have enough information 
-in the policy documents to answer this. Please contact HDFC Bank directly."
+
+IMPORTANT:
+- Always include the sources at the end of your answer.
+- Also include a short explanation titled "Why this answer?"
+- Explain briefly how the answer was derived from context
+- The sources are provided in the context.
+- Format sources exactly like this:
+
+Sources:
+- file1.pdf
+- file2.pdf
+
+If the answer is not in the context, say:
+"I don't have enough information in the policy documents to answer this. Please contact HDFC Bank directly."
 
 Context:
 {context}
@@ -93,18 +110,19 @@ Answer:"""
 
     def format_docs(docs):
         formatted = []
-        sources = set()
+        sources = []
 
         for doc in docs:
             source = doc.metadata.get("source", "Unknown")
             filename = os.path.basename(source)
 
-            sources.add(filename)
+            sources.append(filename)
             formatted.append(doc.page_content)
 
         context = "\n\n".join(formatted)
 
-        source_text = "\n\nSources:\n" + "\n".join(f"- {s}" for s in sources)
+        unique_sources = list(set(sources))
+        source_text = "\n\nSources:\n" + "\n".join(f"- {s}" for s in unique_sources)
 
         return context + source_text
 

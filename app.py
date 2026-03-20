@@ -87,7 +87,25 @@ if query := st.chat_input("Ask your banking question here..."):
         else:
             st.caption(" Answered by: Data Agent (SQL)")
 
-        st.markdown(response)
+        if "Sources:" in response:
+            answer, sources = response.split("Sources:")
+
+        # Show answer
+            st.markdown(answer)
+
+        # Show sources nicely
+            st.markdown("### Sources")
+            for s in sources.strip().split("\n"):
+                if s.strip():
+                   st.markdown(f"- {s.replace('-', '').strip()}")
+        else:
+            st.markdown(response)
+
+    if "Why this answer?" in response:
+        explanation = response.split("Why this answer?")[1]
+
+        st.markdown("### Why this answer?")
+        st.markdown(explanation)
 
     # Save assistant message
     st.session_state.messages.append({
