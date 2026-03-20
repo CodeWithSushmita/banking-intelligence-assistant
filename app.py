@@ -75,7 +75,8 @@ if query := st.chat_input("Ask your banking question here..."):
             result = orchestrator.invoke({
                 "query": query,
                 "agent_used": "",
-                "response": ""
+                "response": "",
+                "sources": []
             })
         
         response = result["answer"]

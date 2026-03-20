@@ -5,6 +5,7 @@ class AgentState(TypedDict):
     query: str
     agent_used: str
     response: str
+    sources: list[str]
 
 def build_orchestrator(rag_chain, sql_agent):
     """Build the LangGraph orchestrator that routes between RAG and SQL agents."""
@@ -33,13 +34,16 @@ def build_orchestrator(rag_chain, sql_agent):
 
     # RAG node
     def run_rag_agent(state: AgentState) -> AgentState:
-        state["response"] = rag_chain.invoke(state["query"])
+        rag_result = rag_chain(state["query"])
+        state["response"] = rag_result["answer"]
+        state["sources"] = rag_result["sources"]
         return state
 
     # SQL node
     def run_sql_agent(state: AgentState) -> AgentState:
         result = sql_agent.invoke({"input": state["query"]})
         state["response"] = result["output"]
+        state["sources"] = [] 
         return state
 
     # Routing function
