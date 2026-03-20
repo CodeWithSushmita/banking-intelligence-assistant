@@ -107,6 +107,10 @@ if query := st.chat_input("Ask your banking question here..."):
     if "Why this answer?" in response:
         explanation = response.split("Why this answer?")[1]
 
+        # Remove sources from explanation
+        if "Sources:" in explanation:
+            explanation = explanation.split("Sources:")[0]
+
         st.markdown("### Why this answer?")
         st.markdown(explanation)
 
