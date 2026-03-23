@@ -82,19 +82,11 @@ def load_rag_agent(vectorstore_path: str = "vectorstore/"):
 
     Use ONLY the context below to answer the customer's question.
 
-    IMPORTANT:
-    - Always include the sources at the end of your answer.
-    - Also include a short explanation titled "Why this answer?"
-    - Explain briefly how the answer was derived from context
-    - The sources are provided in the context.
-    - Format sources exactly like this:
-
-    Sources:
-    - file1.pdf
-    - file2.pdf
-
-    If the answer is not in the context, say:
-    "I don't have enough information in the policy documents to answer this. Please contact HDFC Bank directly."
+    STRICT RULES:
+    - Do NOT generate or mention any "Sources"
+    - Do NOT say "based on the document"
+    - Only answer from context
+    - If answer is not found, say you don't have enough information
 
     Context:
     {context}

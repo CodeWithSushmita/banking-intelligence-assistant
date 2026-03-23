@@ -1,15 +1,14 @@
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-import streamlit as st
 
 import streamlit as st
 from agents.rag_agent import load_rag_agent
 from agents.sql_agent import load_sql_agent
 from agents.orchestrator import build_orchestrator
-
 import re
 
+# ── UTILS ──
 def format_currency(text):
     return re.sub(r"\$(\d+(?:,\d+)*(?:\.\d+)?)", r"₹\1", text)
 
@@ -28,7 +27,7 @@ I'll automatically route your question to the right agent.
 """)
 st.divider()
 
-# ── LOAD AGENTS (cached so they load only once) ──
+# ── LOAD AGENTS ──
 @st.cache_resource
 def load_agents():
     with st.spinner("Loading agents... please wait "):
@@ -43,7 +42,6 @@ orchestrator = load_agents()
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Display chat history
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
@@ -64,12 +62,12 @@ if len(st.session_state.messages) == 0:
 # ── CHAT INPUT ──
 if query := st.chat_input("Ask your banking question here..."):
 
-    # Add user message
+    # USER MESSAGE
     st.session_state.messages.append({"role": "user", "content": query})
     with st.chat_message("user"):
         st.markdown(query)
 
-    # Get response
+    # ASSISTANT RESPONSE
     with st.chat_message("assistant"):
         with st.spinner("Thinking..."):
             result = orchestrator.invoke({
@@ -78,10 +76,25 @@ if query := st.chat_input("Ask your banking question here..."):
                 "response": "",
                 "sources": []
             })
-        
+
         response = result["response"]
-        sources = result["sources"]
+        sources = result.get("sources", [])
         agent_used = result["agent_used"].upper()
+
+        
+        if "Sources:" in response:
+            response = response.split("Sources:")[0]
+
+        # Extract explanation BEFORE modifying response further
+        explanation = None
+        if "Why this answer?" in response:
+            parts = response.split("Why this answer?")
+            response = parts[0]
+            explanation = parts[1]
+
+            
+            if "Sources:" in explanation:
+                explanation = explanation.split("Sources:")[0]
 
         # Show agent
         if agent_used == "RAG":
@@ -92,29 +105,21 @@ if query := st.chat_input("Ask your banking question here..."):
         # Show answer
         st.markdown(response)
 
-        # Show sources
+        # Show explanation (clean)
+        if explanation:
+            st.markdown("### Why this answer?")
+            st.markdown(explanation)
+
+        # Show sources (ONLY structured ones)
         BASE_URL = "https://huggingface.co/datasets/MLbySush/banking-rag-documents/resolve/main"
 
         if sources:
             st.markdown("### Sources")
-
             for s in sources:
                 file_url = f"{BASE_URL}/{s}"
                 st.markdown(f"- [{s}]({file_url})")
-        else:
-            st.markdown(response)
 
-    if "Why this answer?" in response:
-        explanation = response.split("Why this answer?")[1]
-
-        # Remove sources from explanation
-        if "Sources:" in explanation:
-            explanation = explanation.split("Sources:")[0]
-
-        st.markdown("### Why this answer?")
-        st.markdown(explanation)
-
-    # Save assistant message
+    # SAVE MESSAGE
     st.session_state.messages.append({
         "role": "assistant",
         "content": f"*[{agent_used} Agent]*\n\n{response}"
