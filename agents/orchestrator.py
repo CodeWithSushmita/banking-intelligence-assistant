@@ -1,5 +1,6 @@
 from langgraph.graph import StateGraph, END
 from typing import TypedDict
+from guardrails.input_guardrail import run_input_guardrail
 
 class AgentState(TypedDict):
     query: str
@@ -9,6 +10,17 @@ class AgentState(TypedDict):
 
 def build_orchestrator(rag_chain, sql_agent):
     """Build the LangGraph orchestrator that routes between RAG and SQL agents."""
+
+    # Input guardrail node
+    def input_guardrail(state: AgentState) -> AgentState:
+        result = run_input_guardrail(state["query"])
+
+        if result["blocked"]:
+            state["agent_used"] = "guardrail"
+            state["response"] = result["response"]
+            state["sources"] = []
+
+        return state
 
     # Router node
     def router(state: AgentState) -> AgentState:
@@ -50,12 +62,22 @@ def build_orchestrator(rag_chain, sql_agent):
     def route_to_agent(state: AgentState) -> str:
         return state["agent_used"]
 
+    # Guardrail routing function
+    def route_after_guardrail(state: AgentState) -> str:
+        return "blocked" if state["agent_used"] == "guardrail" else "router"
+
     # Build graph
     workflow = StateGraph(AgentState)
+    workflow.add_node("input_guardrail", input_guardrail)
     workflow.add_node("router", router)
     workflow.add_node("rag", run_rag_agent)
     workflow.add_node("sql", run_sql_agent)
-    workflow.set_entry_point("router")
+    workflow.set_entry_point("input_guardrail")
+    workflow.add_conditional_edges(
+        "input_guardrail",
+        route_after_guardrail,
+        {"blocked": END, "router": "router"}
+    )
     workflow.add_conditional_edges(
         "router", route_to_agent, {"rag": "rag", "sql": "sql"}
     )

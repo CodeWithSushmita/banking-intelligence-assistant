@@ -26,25 +26,12 @@ This project solves that by **combining both using a smart routing layer**
 
 ##  Architecture
 
-- **LangGraph Orchestrator**
-  - Routes queries dynamically between agents
-  - Uses keyword-based scoring (extendable to LLM routing)
+- LangGraph orchestrator
+- RAG (FAISS + MiniLM)
+- SQL Agent
+- Streamlit UI
 
-- **RAG Pipeline**
-  - FAISS vector store
-  - HuggingFace MiniLM embeddings
-  - MMR retrieval for better context diversity
-
-- **SQL Agent**
-  - Handles structured queries on banking dataset
-
-- **Streamlit UI**
-  - Chat-based interface
-  - Clean answer + explanation + sources
-
----
-
-##  Features
+Features
 
 -  Intelligent query routing (RAG vs SQL)
 -  Grounded responses (no hallucinated answers)

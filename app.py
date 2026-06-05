@@ -99,8 +99,15 @@ if query := st.chat_input("Ask your banking question here..."):
         # Show agent
         if agent_used == "RAG":
             st.caption("Answered by: Policy Agent (RAG)")
-        else:
+
+        elif agent_used == "SQL":
             st.caption("Answered by: Data Agent (SQL)")
+
+        elif agent_used == "GUARDRAIL":
+            st.caption("Answered by: Guardrail Agent")
+
+        else:
+            st.caption(f"Answered by: {agent_used}")
 
         # Show answer
         st.markdown(response)
@@ -120,7 +127,13 @@ if query := st.chat_input("Ask your banking question here..."):
                 st.markdown(f"- [{s}]({file_url})")
 
     # SAVE MESSAGE
+    display_agent = {
+        "RAG": "Policy Agent (RAG)",
+        "SQL": "Data Agent (SQL)",
+        "GUARDRAIL": "Guardrail Agent"
+    }.get(agent_used, agent_used)
+
     st.session_state.messages.append({
         "role": "assistant",
-        "content": f"*[{agent_used} Agent]*\n\n{response}"
+        "content": f"**Answered by: {display_agent}**\n\n{response}"
     })
